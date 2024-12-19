@@ -1,9 +1,10 @@
 ---
 source: cubesql/src/compile/mod.rs
 expression: result
+snapshot_kind: text
 ---
 +----------------------+
 | formatted_identifier |
 +----------------------+
-| column_name          |
+| "column_name"        |
 +----------------------+
