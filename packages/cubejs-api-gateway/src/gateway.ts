@@ -1582,11 +1582,11 @@ class ApiGateway {
   }
 
   /**
-   * Convert adapter's result and other request parameters to a final
+   * Prepare adapter's result and other transform parameters for a final
    * result object.
    * @internal
    */
-  private async getResultInternal(
+  private async prepareResultTransformData(
     context: RequestContext,
     queryType: QueryType,
     normalizedQuery: NormalizedQuery,
@@ -1765,7 +1765,7 @@ class ApiGateway {
             metaConfigResult, normalizedQuery
           );
 
-          return this.getResultInternal(
+          return this.prepareResultTransformData(
             context,
             queryType,
             normalizedQuery,
@@ -1943,7 +1943,7 @@ class ApiGateway {
               sqlQueries[index],
             );
 
-            return this.getResultInternal(
+            return this.prepareResultTransformData(
               context,
               queryType,
               normalizedQuery,
