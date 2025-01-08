@@ -456,7 +456,7 @@ class ApiGateway {
 
       app.get('/cubejs-system/v1/pre-aggregations/timezones', systemMiddlewares, systemAsyncHandler(async (req, res) => {
         this.resToResultFn(res)({
-          timezones: this.scheduledRefreshTimeZones || []
+          timezones: this.scheduledRefreshTimeZones ? this.scheduledRefreshTimeZones(req.context) : []
         });
       }));
 
@@ -625,12 +625,13 @@ class ApiGateway {
       const compilerApi = await this.getCompilerApi(context);
       const preAggregations = await compilerApi.preAggregations();
 
+      const refreshTimezones = this.scheduledRefreshTimeZones ? await this.scheduledRefreshTimeZones(context) : [];
       const preAggregationPartitions = await this.refreshScheduler()
         .preAggregationPartitions(
           context,
           normalizeQueryPreAggregations(
             {
-              timezones: this.scheduledRefreshTimeZones,
+              timezones: refreshTimezones.length > 0 ? refreshTimezones : undefined,
               preAggregations: preAggregations.map(p => ({
                 id: p.id,
                 cacheOnly,
@@ -652,9 +653,10 @@ class ApiGateway {
   ) {
     const requestStarted = new Date();
     try {
+      const refreshTimezones = this.scheduledRefreshTimeZones ? await this.scheduledRefreshTimeZones(context) : [];
       query = normalizeQueryPreAggregations(
         this.parseQueryParam(query),
-        { timezones: this.scheduledRefreshTimeZones }
+        { timezones: refreshTimezones.length > 0 ? refreshTimezones : undefined }
       );
       const orchestratorApi = await this.getAdapterApi(context);
       const compilerApi = await this.getCompilerApi(context);
@@ -1196,30 +1198,32 @@ class ApiGateway {
             currentQuery = this.parseMemberExpressionsInQuery(currentQuery);
           }
 
-          let normalizedQuery = normalizeQuery(currentQuery, persistent);
+          const normalizedQuery = normalizeQuery(currentQuery, persistent);
+          let evaluatedQuery = normalizedQuery;
 
           if (hasExpressionsInQuery) {
             // We need to parse/eval all member expressions early as applyRowLevelSecurity
             // needs to access the full SQL query in order to evaluate rules
-            normalizedQuery =
+            evaluatedQuery =
               this.evalMemberExpressionsInQuery(normalizedQuery);
           }
 
           // First apply cube/view level security policies
-          const queryWithRlsFilters = await compilerApi.applyRowLevelSecurity(
+          const { query: queryWithRlsFilters, denied } = await compilerApi.applyRowLevelSecurity(
             normalizedQuery,
+            evaluatedQuery,
             context
           );
           // Then apply user-supplied queryRewrite
-          let rewrittenQuery = await this.queryRewrite(
+          let rewrittenQuery = !denied ? await this.queryRewrite(
             queryWithRlsFilters,
             context
-          );
+          ) : queryWithRlsFilters;
 
           // applyRowLevelSecurity may add new filters which may contain raw member expressions
           // if that's the case, we should run an extra pass of parsing here to make sure
           // nothing breaks down the road
-          if (this.hasExpressionsInQuery(rewrittenQuery)) {
+          if (hasExpressionsInQuery || this.hasExpressionsInQuery(rewrittenQuery)) {
             rewrittenQuery = this.parseMemberExpressionsInQuery(rewrittenQuery);
             rewrittenQuery = this.evalMemberExpressionsInQuery(rewrittenQuery);
           }
