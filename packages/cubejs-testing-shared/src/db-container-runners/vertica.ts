@@ -8,7 +8,7 @@ export class VerticaDBRunner extends DbRunnerAbstract {
     const container = new GenericContainer(`vertica/vertica-ce:${version}`)
       .withEnvironment({ TZ: 'Antarctica/Troll', VERTICA_DB_NAME: 'test', VMART_ETL_SCRIPT: '', VMART_ETL_SQL: '' })
       .withExposedPorts(5433)
-      .withStartupTimeout(60 * 1000)
+      .withStartupTimeout(600 * 1000)
       .withWaitStrategy(
         Wait.forLogMessage('Vertica is now running')
       );
