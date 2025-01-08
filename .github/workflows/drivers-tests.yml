@@ -51,7 +51,7 @@ on:
       - 'packages/cubejs-postgres-driver/**'
       - 'packages/cubejs-snowflake-driver/**'
       - 'packages/cubejs-vertica-driver/**'
-      
+
       # To test SQL API Push down
       - 'packages/cubejs-backend-native/**'
       - 'rust/cubesql/**'
@@ -192,19 +192,6 @@ jobs:
     if: (needs['latest-tag-sha'].outputs.sha != github.sha)
     env:
       CLOUD_DATABASES: >
-        athena-export-bucket-s3
-        bigquery-export-bucket-gcs
-        clickhouse-export-bucket-s3
-        databricks-jdbc
-        databricks-jdbc-export-bucket-s3
-        databricks-jdbc-export-bucket-azure
-        redshift
-        redshift-export-bucket-s3
-        snowflake
-        snowflake-export-bucket-s3
-        snowflake-export-bucket-azure
-        snowflake-export-bucket-azure-via-storage-integration
-        snowflake-export-bucket-gcs
         vertica
       # As per docs:
       # Secrets cannot be directly referenced in if: conditionals. Instead, consider setting
@@ -216,23 +203,7 @@ jobs:
         node:
           - 20.x
         database:
-          - athena-export-bucket-s3
-          - bigquery-export-bucket-gcs
-          - clickhouse
-          - clickhouse-export-bucket-s3
-          - databricks-jdbc
-          - databricks-jdbc-export-bucket-s3
-          - databricks-jdbc-export-bucket-azure
-          - mssql
-          - mysql
-          - postgres
-          - redshift
-          - redshift-export-bucket-s3
-          - snowflake
-          - snowflake-export-bucket-s3
-          - snowflake-export-bucket-azure
-          - snowflake-export-bucket-azure-via-storage-integration
-          - snowflake-export-bucket-gcs
+          - vertica
       fail-fast: false
 
     steps:
@@ -336,4 +307,3 @@ jobs:
             cd ./packages/cubejs-testing-drivers
             export DEBUG=testcontainers
             yarn ${{ matrix.database }}-full
-
