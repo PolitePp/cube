@@ -542,9 +542,15 @@ export async function startBirdBoxFromCli(
   }
 
   if (options.cubejsConfig) {
+    const configType = options.cubejsConfig.split('.').at(-1);
+    for (const configFile of ['cube.js', 'cube.py']) {
+      if (fs.existsSync(path.join(testDir, configFile))) {
+        fs.removeSync(path.join(testDir, configFile));
+      }
+    }
     fs.copySync(
       path.join(process.cwd(), 'birdbox-fixtures', options.cubejsConfig),
-      path.join(testDir, 'cube.js')
+      path.join(testDir, `cube.${configType}`)
     );
   }
 
